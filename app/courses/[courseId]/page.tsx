@@ -826,11 +826,11 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
                                     </div>
                                   </div>
                                   {openPreviews.has(`/api/files/${r.url}`) && (
-                                    <div className="mt-3 rounded-lg border border-border" style={{ height: "600px", resize: "vertical", overflow: "hidden", minHeight: "150px" }}>
+                                    <div className="mt-3 overflow-hidden rounded-lg border border-border">
                                       {r.fileType?.startsWith("image/") ? (
-                                        <img src={`/api/files/${r.url}`} alt={r.title} className="h-full w-full object-contain bg-background" />
+                                        <img src={`/api/files/${r.url}`} alt={r.title} className="max-h-[500px] w-full object-contain bg-background" />
                                       ) : (
-                                        <iframe src={`/api/files/${r.url}`} title={r.title} className="h-full w-full bg-white" />
+                                        <iframe src={`/api/files/${r.url}`} title={r.title} className="h-[600px] w-full bg-white" />
                                       )}
                                     </div>
                                   )}
@@ -841,9 +841,11 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
                                     return (
                                       <div className="mt-3 overflow-hidden rounded-lg border border-green-600/30">
                                         <div className="border-b border-green-600/20 bg-green-500/5 px-4 py-2 text-xs font-semibold text-green-600 uppercase tracking-wider">Deep Explainer</div>
-                                        <div className="overflow-y-auto bg-background px-6 py-5" style={{ height: "600px", resize: "vertical", minHeight: "150px" }}>
-                                          <MarkdownRenderer content={mdPreviews[explainerKey] || "Loading..."} />
-                                        </div>
+                                        <ResizablePanel defaultHeight={600}>
+                                          <div className="bg-background px-6 py-5">
+                                            <MarkdownRenderer content={mdPreviews[explainerKey] || "Loading..."} />
+                                          </div>
+                                        </ResizablePanel>
                                       </div>
                                     );
                                   })()}
