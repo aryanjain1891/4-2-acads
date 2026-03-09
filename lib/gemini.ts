@@ -45,10 +45,17 @@ const DEEP_EXPLAIN_PROMPT = `You are an expert tutor creating a comprehensive de
 - Tables MUST have a header row with \`|\` separators and a \`|---|---|\` separator line.
 
 ### Diagrams (rendered via Mermaid)
-- When the content involves process flows, state transitions, resource allocation, scheduling flows, producer-consumer patterns, or any concept that benefits from a visual, include a Mermaid diagram in a \`\`\`mermaid code block.
-- Use the appropriate diagram type: \`flowchart TD\` for flows, \`sequenceDiagram\` for interactions, \`stateDiagram-v2\` for state machines, \`graph LR\` for relationships.
-- Keep diagrams focused — one concept per diagram, not everything crammed into one.
-- Do NOT use spaces in node IDs (use camelCase). Wrap labels with special characters in double quotes.
+- When the content involves process flows, state transitions, resource allocation, or any concept that benefits from a visual, include a Mermaid diagram in a \`\`\`mermaid code block.
+- Use simple diagram types: \`graph TD\`, \`graph LR\`, \`sequenceDiagram\`, \`stateDiagram-v2\`.
+- Keep diagrams simple and focused — one concept per diagram.
+- STRICT syntax rules (mermaid is very picky):
+  - Node IDs: no spaces, use camelCase (e.g., \`processA\`, \`readyQueue\`)
+  - Labels with special characters: use double quotes (e.g., \`A["Process (main)"]\`)
+  - NO HTML tags in labels (no \`<div>\`, \`<br/>\`, \`<b>\` etc.)
+  - NO \`direction\` keyword inside subgraphs
+  - NO parentheses in label text without quoting the whole label
+  - Prefer flat graphs over deeply nested subgraphs
+  - Test-worthy example: \`graph TD; A["Start"] --> B["Process"]; B --> C["End"]\`
 - Only include diagrams when they genuinely aid understanding — not every section needs one.
 
 ### General markdown

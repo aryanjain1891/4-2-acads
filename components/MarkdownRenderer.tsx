@@ -12,13 +12,14 @@ import type { Components } from "react-markdown";
 function MermaidBlock({ chart }: { chart: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [failed, setFailed] = useState(false);
 
   const render = useCallback(async () => {
     try {
       const mermaid = (await import("mermaid")).default;
       mermaid.initialize({
         startOnLoad: false,
+        suppressErrorRendering: true,
         theme: "dark",
         themeVariables: {
           darkMode: true,
@@ -35,25 +36,33 @@ function MermaidBlock({ chart }: { chart: string }) {
       });
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       const { svg: rendered } = await mermaid.render(id, chart);
-      setSvg(rendered);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to render diagram");
+      if (rendered.includes("Syntax error") || rendered.includes("error-icon")) {
+        setFailed(true);
+      } else {
+        setSvg(rendered);
+      }
+    } catch {
+      setFailed(true);
     }
   }, [chart]);
 
   useEffect(() => { render(); }, [render]);
 
-  if (error) {
+  if (failed) {
     return (
-      <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-400">
-        <p className="font-medium mb-1">Diagram error</p>
-        <pre className="text-xs opacity-70 whitespace-pre-wrap">{error}</pre>
-      </div>
+      <SyntaxHighlighter
+        style={oneDark}
+        language="text"
+        PreTag="div"
+        customStyle={{ margin: 0, borderRadius: "0.5rem", fontSize: "0.85rem", lineHeight: 1.6 }}
+      >
+        {chart}
+      </SyntaxHighlighter>
     );
   }
 
   if (!svg) {
-    return <div className="py-8 text-center text-sm text-muted">Rendering diagram...</div>;
+    return <div className="py-4 text-center text-sm text-muted">Rendering diagram...</div>;
   }
 
   return (
