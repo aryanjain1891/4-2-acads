@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 4-2 Acads
 
-## Getting Started
+A local-first academic tracker that puts your entire semester into one clean interface. Track courses, exams, scores, resources, handouts, study plans, and assignments — with Cursor IDE and AI integration.
 
-First, run the development server:
+## Features
+
+- **Dashboard** — Upcoming exams and deadlines at a glance, course cards with weighted scores
+- **Course Management** — Add courses with custom evaluation structures (user-defined components and weights)
+- **Exam & Deadline Tracking** — Quiz, midsem, endsem dates with calendar view and countdown
+- **Score Tracker** — Define grading components per course, enter marks, see live weighted percentages
+- **Resources** — Upload files or add links, organize into collapsible folders, drag-to-reorder, bulk upload, inline PDF/image preview
+- **PYQ Management** — Upload previous year question papers with linked solutions
+- **Handouts** — Course handout uploads with inline preview
+- **Study Plans** — Per-course Markdown editor with live preview
+- **Assignments** — Create assignment workspace folders, open in Cursor IDE
+- **AI Integration** — Auto-transcribe uploaded PDFs via Gemini OCR; one-click AI prompts referencing your lecture notes for Cursor
+- **Calendar** — Month view with color-coded exams and deadlines
+- **Dark Mode** — Toggle in sidebar
+- **PPTX to PDF** — Auto-converts Office documents to PDF on upload (requires LibreOffice)
+
+## Tech Stack
+
+- Next.js 16 (App Router) + React 19 + TypeScript
+- Tailwind CSS 4
+- @dnd-kit for drag-and-drop
+- File-based storage (JSON + disk files, no database)
+- Single-user, runs locally
+
+## Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Copy env file and add your Gemini API key (optional, for PDF OCR)
+cp .env.example .env.local
+
+# Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+On first run, the app creates `data/`, `content/`, and `assignments/` directories automatically as you add courses and resources.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Optional: PPTX to PDF conversion
 
-## Learn More
+To auto-convert `.pptx`, `.docx`, and other Office formats to PDF on upload, install LibreOffice:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# macOS
+brew install --cask libreoffice
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Ubuntu/Debian
+sudo apt install libreoffice
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Storage Layout
 
-## Deploy on Vercel
+```
+data/              # JSON data files (auto-created)
+  courses.json
+  exams.json
+  scores.json
+  resources.json
+  handouts.json
+  deadlines.json
+  resource-folders.json
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+content/           # Uploaded files (auto-created)
+  handouts/{courseId}/
+  resources/{courseId}/
+  plans/{courseId}.md
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+assignments/       # Assignment workspaces (auto-created)
+  {courseId}/{slug}/
+```
+
+## License
+
+MIT
