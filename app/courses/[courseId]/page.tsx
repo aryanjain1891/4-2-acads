@@ -8,6 +8,8 @@ import { useToast } from "@/components/Toast";
 import { apiPost, apiPut, apiDelete, apiPostForm } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
+import ResizablePanel from "@/components/ResizablePanel";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import SortableItem from "@/components/SortableItem";
@@ -73,6 +75,9 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [persistedFolders, setPersistedFolders] = useState<string[]>([]);
+  const [generatingExplainer, setGeneratingExplainer] = useState<Set<string>>(new Set());
+  const [explainerStatus, setExplainerStatus] = useState<Record<string, { hasTranscript: boolean; hasExplainer: boolean; explainerUrl?: string }>>({});
+  const [mdPreviews, setMdPreviews] = useState<Record<string, string>>({});
 
   const { toast } = useToast();
   const scoreTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -96,6 +101,7 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
     fetch(`/api/assignments/${courseId}`).then((r) => r.json()).then((d: { assignments: string[]; basePath: string; projectPath: string }) => {
       setAssignments(d.assignments);
     }).catch(() => {});
+    fetch(`/api/deep-explain/status?courseId=${courseId}`).then((r) => r.json()).then(setExplainerStatus).catch(() => {});
   }, [courseId]);
 
   useEffect(() => { reload(); }, [reload]);
@@ -272,6 +278,23 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
     reload();
   };
 
+  const triggerDeepExplain = async (r: Resource) => {
+    setGeneratingExplainer((prev) => { const next = new Set(prev); next.add(r.id); return next; });
+    try {
+      const res = await fetch("/api/deep-explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resourceId: r.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast(data.error || "Failed to generate", "error"); return; }
+      if (data.alreadyExists) { toast("Deep explainer already exists"); }
+      else { toast("Deep explainer generated!"); }
+      reload();
+    } catch { toast("Failed to generate deep explainer", "error"); }
+    finally { setGeneratingExplainer((prev) => { const next = new Set(prev); next.delete(r.id); return next; }); }
+  };
+
   const addHandout = async () => {
     if (!handoutFile) { toast("Please select a file", "error"); return; }
     const formData = new FormData();
@@ -371,7 +394,25 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
     if (!fileType && !url) return false;
     const ft = (fileType || "").toLowerCase();
     const ext = url.split(".").pop()?.toLowerCase() || "";
-    return ft.startsWith("image/") || ft === "application/pdf" || ["pdf", "jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+    return ft.startsWith("image/") || ft === "application/pdf" || ["pdf", "jpg", "jpeg", "png", "gif", "webp", "md"].includes(ext);
+  };
+
+  const isMdFile = (url: string) => url.split(".").pop()?.toLowerCase() === "md";
+
+  const toggleMdPreview = async (fileUrl: string) => {
+    const key = `/api/files/${fileUrl}`;
+    setOpenPreviews((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+    if (!mdPreviews[key]) {
+      try {
+        const res = await fetch(key);
+        const text = await res.text();
+        setMdPreviews((prev) => ({ ...prev, [key]: text }));
+      } catch {}
+    }
   };
 
   const pyqs = resources.filter((r) => r.isPYQ && !r.isSolution).sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
@@ -506,6 +547,12 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
             label="Exam prep"
             icon="📖"
             prompt={`@4-2-acads/content/resources/${courseId} help me prepare for the upcoming exam — list important topics, formulas, and concepts from all modules`}
+            small
+          />
+          <PromptButton
+            label="Deep Explain"
+            icon="🧠"
+            prompt={`@4-2-acads/content/resources/${courseId}/_transcripts_index.md Read the lecture transcript I specify and create a comprehensive deep explanation. Start from the beginning and explain every concept in insane depth. Be as detailed as possible. Include a notation/abbreviation table, numbered "Part N:" sections, step-by-step walkthroughs of every example, and "Feel:" callouts with intuitive analogies. Cover everything — do not skip or summarize any topic. Save the output as {ModuleName}-Deep-Explanation.md in the same folder. The transcript to explain: `}
             small
           />
         </div>
@@ -751,25 +798,57 @@ export default function CourseDetail({ params }: { params: Promise<{ courseId: s
                                           <a href={`/api/files/${r.url}`} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-accent hover:underline">New Tab</a>
                                           {isPreviewable(r.fileType, r.url) && (
                                             <button
-                                              onClick={() => setOpenPreviews((prev) => { const next = new Set(prev); const key = `/api/files/${r.url}`; next.has(key) ? next.delete(key) : next.add(key); return next; })}
+                                              onClick={() => isMdFile(r.url) ? toggleMdPreview(r.url) : setOpenPreviews((prev) => { const next = new Set(prev); const key = `/api/files/${r.url}`; next.has(key) ? next.delete(key) : next.add(key); return next; })}
                                               className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${openPreviews.has(`/api/files/${r.url}`) ? "border-accent text-accent" : "border-border text-muted hover:border-accent hover:text-accent"}`}
                                             >{openPreviews.has(`/api/files/${r.url}`) ? "Hide" : "Preview"}</button>
                                           )}
                                         </>
                                       )}
+                                      {explainerStatus[r.id]?.hasExplainer ? (
+                                        <button
+                                          onClick={() => toggleMdPreview(explainerStatus[r.id]!.explainerUrl!)}
+                                          className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${openPreviews.has(`/api/files/${explainerStatus[r.id]?.explainerUrl}`) ? "border-green-600 text-green-600 bg-green-500/20" : "border-green-600/30 bg-green-500/10 text-green-600 hover:bg-green-500/20"}`}
+                                        >{openPreviews.has(`/api/files/${explainerStatus[r.id]?.explainerUrl}`) ? "Hide Explainer" : "✓ Explainer"}</button>
+                                      ) : explainerStatus[r.id]?.hasTranscript ? (
+                                        <button
+                                          onClick={() => triggerDeepExplain(r)}
+                                          disabled={generatingExplainer.has(r.id)}
+                                          className="rounded-md border border-purple-600/30 bg-purple-500/10 px-2.5 py-1 text-xs font-medium text-purple-600 hover:bg-purple-500/20 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                        >{generatingExplainer.has(r.id) ? (
+                                          <span className="flex items-center gap-1.5">
+                                            <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                                            Generating...
+                                          </span>
+                                        ) : "Deep Explain"}</button>
+                                      ) : null}
                                       <button onClick={() => { setEditingResource(r.id); setEditResourceForm({ title: r.title, url: r.url || "" }); }} className="rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent transition-colors">Rename</button>
                                       <button onClick={() => setConfirmDelete({ type: "resource", id: r.id, name: r.title })} className="text-xs text-danger hover:underline">Delete</button>
                                     </div>
                                   </div>
                                   {openPreviews.has(`/api/files/${r.url}`) && (
-                                    <div className="mt-3 overflow-hidden rounded-lg border border-border">
+                                    <div className="mt-3 rounded-lg border border-border" style={{ height: "600px", resize: "vertical", overflow: "hidden", minHeight: "150px" }}>
                                       {r.fileType?.startsWith("image/") ? (
-                                        <img src={`/api/files/${r.url}`} alt={r.title} className="max-h-[500px] w-full object-contain bg-background" />
+                                        <img src={`/api/files/${r.url}`} alt={r.title} className="h-full w-full object-contain bg-background" />
                                       ) : (
-                                        <iframe src={`/api/files/${r.url}`} title={r.title} className="h-[600px] w-full bg-white" />
+                                        <iframe src={`/api/files/${r.url}`} title={r.title} className="h-full w-full bg-white" />
                                       )}
                                     </div>
                                   )}
+                                  {(() => {
+                                    const explainerUrl = explainerStatus[r.id]?.explainerUrl;
+                                    const explainerKey = explainerUrl ? `/api/files/${explainerUrl}` : null;
+                                    if (!explainerKey || !openPreviews.has(explainerKey)) return null;
+                                    return (
+                                      <div className="mt-3 overflow-hidden rounded-lg border border-green-600/30">
+                                        <div className="border-b border-green-600/20 bg-green-500/5 px-4 py-2 text-xs font-semibold text-green-600 uppercase tracking-wider">Deep Explainer</div>
+                                        <ResizablePanel defaultHeight={600}>
+                                          <div className="bg-background px-6 py-5">
+                                            <MarkdownRenderer content={mdPreviews[explainerKey] || "Loading..."} />
+                                          </div>
+                                        </ResizablePanel>
+                                      </div>
+                                    );
+                                  })()}
                                 </>
                               )}
                             </div>

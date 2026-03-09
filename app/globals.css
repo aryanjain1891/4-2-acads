@@ -63,6 +63,73 @@ body {
 .prose th, .prose td { border: 1px solid var(--border-color); padding: 0.5rem 0.75rem; text-align: left; }
 .prose input[type="checkbox"] { margin-right: 0.5rem; }
 
+/* Markdown preview panel (deep explainer, etc.) */
+.md-preview {
+  color: var(--foreground);
+  line-height: 1.8;
+  font-size: 0.9375rem;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+.md-preview > *:first-child { margin-top: 0; }
+
+.md-preview h1 { font-size: 1.625rem; font-weight: 700; margin: 2.5rem 0 1rem; color: var(--foreground); letter-spacing: -0.025em; }
+.md-preview h2 { font-size: 1.3rem; font-weight: 700; margin: 2.25rem 0 0.75rem; color: var(--foreground); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; letter-spacing: -0.02em; }
+.md-preview h3 { font-size: 1.125rem; font-weight: 600; margin: 1.75rem 0 0.5rem; color: var(--foreground); letter-spacing: -0.015em; }
+.md-preview h4 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--foreground); }
+
+.md-preview p { margin: 0.875rem 0; }
+.md-preview ul { list-style: disc; padding-left: 1.625rem; margin: 0.625rem 0; }
+.md-preview ol { list-style: decimal; padding-left: 1.625rem; margin: 0.625rem 0; }
+.md-preview li { margin: 0.375rem 0; }
+.md-preview li > ul, .md-preview li > ol { margin: 0.25rem 0; }
+.md-preview li > p { margin: 0.25rem 0; }
+
+.md-preview strong { font-weight: 700; }
+.md-preview em { font-style: italic; color: color-mix(in srgb, var(--foreground) 85%, var(--accent)); }
+.md-preview a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+.md-inline-code {
+  background: var(--surface-hover);
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.84rem;
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  border: 1px solid var(--border-color);
+}
+.md-preview pre { margin: 1.25rem 0; border-radius: 0.5rem; overflow: hidden; }
+
+.md-preview blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.5rem 1rem;
+  margin: 1.25rem 0;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+.md-preview blockquote p { margin: 0.375rem 0; }
+
+.md-table-wrap { overflow-x: auto; margin: 1.25rem 0; border-radius: 0.5rem; border: 1px solid var(--border-color); }
+.md-preview table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.md-preview thead { background: var(--surface); }
+.md-preview th { padding: 0.625rem 0.875rem; text-align: left; font-weight: 600; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); border-bottom: 1px solid var(--border-color); }
+.md-preview td { padding: 0.5rem 0.875rem; border-bottom: 1px solid var(--border-color); }
+.md-preview tr:last-child td { border-bottom: none; }
+.md-preview tbody tr:hover { background: var(--surface); }
+
+.md-preview hr { border: none; border-top: 1px solid var(--border-color); margin: 2.5rem 0; }
+.md-preview img { max-width: 100%; border-radius: 0.5rem; margin: 1.25rem 0; }
+
+/* Mermaid diagrams */
+.md-mermaid { margin: 1.25rem 0; overflow-x: auto; text-align: center; }
+.md-mermaid svg { max-width: 100%; height: auto; }
+
+/* KaTeX overrides for dark mode */
+.md-preview .katex { font-size: 1.05em; }
+.md-preview .katex-display { margin: 1.25rem 0; overflow-x: auto; overflow-y: hidden; padding: 0.5rem 0; }
+.md-preview .katex-display > .katex { color: var(--foreground); }
+.md-preview .katex { color: var(--foreground); }
+
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
